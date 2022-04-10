@@ -3,41 +3,39 @@ import { NavLink } from "react-router-dom";
 
 const NavigationContainer = styled.div`
   width: 100%;
-  margin-bottom: 2rem;
-
-  @media (min-width: 500px) {
+  @media (min-width: 600px) {
     display: flex;
   }
+  display: flow-root;
   justify-content: center;
   text-align: center;
-  border-bottom: 1px solid black;
+  position: relative;
+  background: blue;
+  color: white;
 `;
 
 const NavigationList = styled.ul`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-
-  @media (min-width: 500px) {
+  @media (min-width: 600px) {
     margin: 20px 0px;
     padding-inline-start: 40px;
   }
+  padding-left: 0px;
 `;
 
 const NavigationItem = styled.li`
   list-style-type: none;
   line-height: 48px;
-
   &:not(:last-child) {
     padding-right: 1rem;
   }
-
   &:hover {
     font-weight: bold;
   }
-
   > a {
-    color: black;
+    color: white;
     text-decoration: none;
   }
 `;
@@ -50,17 +48,17 @@ export const NavItem = (props: any): JSX.Element => (
 
 export const NavList = (): JSX.Element => (
   <NavigationList>
-    <NavItem item="Home" to="/" />
-    <NavItem item="Create" to="/create" />
-    <NavItem item="Scores" to="scores" />
-    <NavItem item="Register" to="register" />
+    <NavItem item="HOME" to="/" />
+    <NavItem item="CREATE" to="/create" />
+    <NavItem item="SCORES" to="scores" />
+    <NavItem item="REGISTER" to="register" />
   </NavigationList>
 );
 
 export const NavigationBar = (): JSX.Element => (
   <>
     <NavigationContainer>
-      <h1>Bracketology</h1>
+      <h1>BRACKETOLOGY</h1>
       <NavList />
     </NavigationContainer>
   </>

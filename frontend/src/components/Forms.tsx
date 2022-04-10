@@ -4,13 +4,15 @@ const SubmitButton = styled.button`
   margin-top: 2rem;
   padding: 0.75rem;
   width: -webkit-fill-available;
-  border: 1px solid black;
+  border: 0;
   border-radius: 4px;
-  background-color: #fff;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
+    rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+  background-color: blue;
+  color: white;
 
   &:hover {
     background-color: #000;
-    color: white;
   }
 `;
 
@@ -30,7 +32,9 @@ const InputGroupLabel = styled.div`
 
 const StyledInput = styled.input`
   padding: 0.75rem;
-  border: 1px solid black;
+  border: 0px solid black;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
+    rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
   border-radius: 4px;
 `;
 
@@ -57,6 +61,6 @@ export const GenericInput = (props: any): JSX.Element => (
 
 export const Submit = (props: any): JSX.Element => (
   <SubmitButton type="button" onClick={props.onSubmit}>
-    Sign Up
+    {props.label}
   </SubmitButton>
 );

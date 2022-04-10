@@ -6,3 +6,4 @@ import "./express";
 
 // Register APIs
 import "./api/users";
+import "./api/bracket";

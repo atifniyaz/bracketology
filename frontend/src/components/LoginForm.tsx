@@ -4,6 +4,7 @@ import * as Forms from "./Forms";
 const LoginContainer = styled.div`
   padding: 4rem;
   width: 20rem;
+  background: rgba(235, 235, 235, 1);
 
   @media (max-width: 500px) {
     width: -webkit-fill-available;
@@ -13,32 +14,28 @@ const LoginContainer = styled.div`
 
   @media (min-width: 500px) {
     margin: auto;
-    border: 1px solid black;
-    border-radius: 10px;
   }
 `;
 
 const Header = styled.div`
-  padding: 1rem;
   font-size: larger;
-  font-weight: bold;
-  text-align: center;
+  text-align: left;
 `;
 
 const StatusText = styled.div`
   font-size: small;
   color: red;
-`
+`;
 
 export const LoginForm = (props: any): JSX.Element => (
   <LoginContainer>
-    <Header>Register</Header>
+    <Header>REGISTER</Header>
     <div>
-      <Forms.GenericInput label="First Name" onChange={props.setFirstName} />
-      <Forms.GenericInput label="Last Name" onChange={props.setLastName} />
-      <Forms.GenericInput label="Email" onChange={props.setEmail} />
+      <Forms.GenericInput label="FIRST NAME" onChange={props.setFirstName} />
+      <Forms.GenericInput label="LAST NAME" onChange={props.setLastName} />
+      <Forms.GenericInput label="EMAIL" onChange={props.setEmail} />
       <StatusText>{props.status}</StatusText>
-      <Forms.Submit label="Register" onSubmit={props.onSubmit} />
+      <Forms.Submit label="REGISTER" onSubmit={props.onSubmit} />
     </div>
   </LoginContainer>
 );

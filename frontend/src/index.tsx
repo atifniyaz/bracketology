@@ -1,20 +1,27 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import App from "./App";
+import App from "./Create";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { NavigationBar } from "./components/Navigation";
-import { Register } from "./pages/Register";
+import { NavigationBar } from "./Navigation";
+import Register from "./Register";
+import Home from "./Home";
+import Scores from "./Scores";
+import { StyledEngineProvider } from "@mui/material";
 
 ReactDOM.render(
-  <BrowserRouter>
-    <NavigationBar />
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/register" element={<Register />} />
-    </Routes>
-  </BrowserRouter>,
+  <StyledEngineProvider injectFirst>
+    <BrowserRouter>
+      <NavigationBar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/create" element={<App />} />
+        <Route path="/scores" element={<Scores />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </BrowserRouter>
+  </StyledEngineProvider>,
   document.getElementById("root")
 );
 

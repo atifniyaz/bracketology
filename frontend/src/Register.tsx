@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { LoginForm } from "../components/LoginForm";
+import { PopupNotification } from "./components/Common";
+import { LoginForm } from "./components/LoginForm";
 
 export function Register() {
   const [first_name, setFirstName] = useState("");
@@ -17,13 +18,17 @@ export function Register() {
   };
 
   return (
-    <LoginForm
-      onSubmit={submit}
-      setFirstName={setFirstName}
-      setLastName={setLastName}
-      setEmail={setEmail}
-      status={status}
-    />
+    <>
+      <LoginForm
+        onSubmit={submit}
+        setFirstName={setFirstName}
+        setLastName={setLastName}
+        setEmail={setEmail}
+      />
+      <PopupNotification visible={status !== ""} hidden={false}>
+        {status}
+      </PopupNotification>
+    </>
   );
 }
 

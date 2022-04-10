@@ -8,7 +8,7 @@ class Database {
   client?: mongo.MongoClient;
 
   constructor() {
-    const uri = `mongodb+srv://gh_codebases@cluster0.fqnlu.mongodb.net`;
+    const uri = `mongodb+srv://cluster0.fqnlu.mongodb.net/`;
     const tlsCAFile = String(path.join(__dirname, "../cert.pem"));
 
     this.client = new mongo.MongoClient(uri, {
