@@ -9,7 +9,7 @@ class Database {
 
   constructor() {
     const uri = process.env["MONGODB_URI"];
-    const tlsCAFile = process.env["MONGODB_CERT"];
+    const tlsCAFile = path.join(__dirname, "../cert.pem");
 
     this.client = new mongo.MongoClient(uri, {
       authMechanism: mongo.AuthMechanism.MONGODB_X509,
