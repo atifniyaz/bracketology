@@ -1,16 +1,13 @@
 import express from "express";
-import cors from "cors";
 import path from "path";
-
-import * as bodyParser from "body-parser";
 
 export const app = express();
 const port = process.env.PORT || 4000;
 
 console.log("Launching Server...");
 
-app.use(bodyParser.urlencoded());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.listen(port, () => console.log(`Server ready on port ${port}!`));
 
 // Serve static files from the React frontend app
