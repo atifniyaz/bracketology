@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc",
+    "build": "yarn install && npm install && npx tsc",
     "start": "node dist/main.js",
     "watch": "nodemon --exec \"npx tsc && node dist/main.js \" -e ts --ignore dist/"
   },
