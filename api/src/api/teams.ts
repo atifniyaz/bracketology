@@ -72,10 +72,14 @@ async function generate_init_bracket(req, res) {
 async function get_team_names(req, res) {
   const teams = await database.get_teams_collection().find({}).toArray();
 
-  const team_names: Record<string, any> = {};
+  const team_names = [];
   for (const team of teams) {
     const teamEntry = Object.entries(team)[0][1];
-    team_names[teamEntry["id"]] = teamEntry["displayName"];
+    team_names.push({
+      id: teamEntry["id"],
+      name: teamEntry["displayName"],
+      logo: teamEntry["logos"][0],
+    });
   }
   return res.json(team_names);
 }

@@ -78,7 +78,8 @@ function parseBracketResponse(bracket: any) {
   return initMap;
 }
 
-function App({ viewOnly }: { viewOnly?: boolean }) {
+function View() {
+  const viewOnly = true;
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -286,7 +287,6 @@ function App({ viewOnly }: { viewOnly?: boolean }) {
             return (
               <BracketRound>
                 <Header>{ROUND_TO_NAME[roundIndex].toUpperCase()}</Header>
-                <Space height={32} />
                 {[...Array(maxGames / Math.pow(2, roundIndex))].map(
                   (_, index) => {
                     return (
@@ -352,16 +352,74 @@ function GameComponent({
   const masterAway = masterMap[`${round} ${index * 2 + 1}`];
 
   const selectedTeam = stateMap[`${round + 1} ${index}`] ?? null;
+  const masterSelectedTeam = masterMap[`${round + 1} ${index}`] ?? null;
+
   const [selected, setSelected] = useState<boolean | null>(null);
 
-  const homeColor = "black";
-  const awayColor = "black";
+  const homeColor =
+    masterSelectedTeam && masterHome && homeTeam
+      ? round === 0
+        ? selectedTeam.id === homeTeam.id
+          ? homeTeam.id === masterSelectedTeam.id
+            ? "green"
+            : "red"
+          : "#777"
+        : masterSelectedTeam.id === masterHome.id
+        ? "black"
+        : "#777"
+      : "#777";
+
+  const awayColor =
+    masterSelectedTeam && masterAway && awayTeam
+      ? round === 0
+        ? selectedTeam.id === awayTeam.id
+          ? awayTeam.id === masterSelectedTeam.id
+            ? "green"
+            : "red"
+          : "#777"
+        : masterSelectedTeam.id === masterAway.id
+        ? "black"
+        : "#777"
+      : "#777";
+
+  const masterHomeColor =
+    masterSelectedTeam &&
+    selectedTeam &&
+    homeTeam &&
+    selectedTeam.id === homeTeam.id
+      ? homeTeam.id === masterSelectedTeam.id
+        ? "green"
+        : "red"
+      : "#777";
+
+  const masterAwayColor =
+    masterSelectedTeam &&
+    selectedTeam &&
+    awayTeam &&
+    selectedTeam.id === awayTeam.id
+      ? awayTeam.id === masterSelectedTeam.id
+        ? "green"
+        : "red"
+      : "#777";
+
+  const masterHomeStrike =
+    (homeTeam?.id !== masterHome?.id && homeTeam?.id !== masterAway?.id) ??
+    false;
+  const masterAwayStrike =
+    (awayTeam?.id !== masterHome?.id && awayTeam?.id !== masterAway?.id) ??
+    false;
 
   return (
     <GameContainer round={round - currRound} viewOnly={viewOnly}>
+      <MasterHeadlineContainer
+        bottom={false}
+        color={masterHomeColor}
+        strike={masterHomeStrike}
+      >
+        {round > 0 && homeTeam?.name}
+      </MasterHeadlineContainer>
       <TeamHeadline
-        team={homeTeam}
-        selected={selectedTeam && selectedTeam?.id === homeTeam?.id}
+        team={masterHome}
         color={homeColor}
         onSelected={() => {
           setState(round + 1, index, homeTeam);
@@ -369,39 +427,38 @@ function GameComponent({
         }}
       />
       <TeamHeadline
-        team={awayTeam}
-        selected={selectedTeam && selectedTeam?.id === awayTeam?.id}
+        team={masterAway}
         color={awayColor}
         onSelected={() => {
           setState(round + 1, index, awayTeam);
           setSelected(false);
         }}
       />
+      <MasterHeadlineContainer
+        bottom={true}
+        color={masterAwayColor}
+        strike={masterAwayStrike}
+      >
+        {round > 0 && awayTeam?.name}
+      </MasterHeadlineContainer>
     </GameContainer>
   );
 }
 
 function TeamHeadline({
-  selected,
   onSelected,
   team,
   color,
 }: {
-  selected: boolean | null;
   onSelected: () => void;
   team: any;
   color: string;
 }) {
   return (
-    <TeamHeadlineContainer
-      selected={selected}
-      textColor={color}
-      onClick={() => onSelected()}
-    >
-      {team && <TeamImg src={team?.logo?.href} />}
+    <TeamHeadlineContainer textColor={color} onClick={() => onSelected()}>
+      <TeamImg src={team?.logo?.href} />
       <TeamRank>{team?.rank}</TeamRank>
       <TeamText>{team?.name}</TeamText>
-      <Circle color={selected ? "blue" : "transparent"} />
     </TeamHeadlineContainer>
   );
 }
@@ -412,7 +469,6 @@ type GameContainerProps = {
 };
 
 type TeamTextProps = {
-  selected: boolean | null;
   textColor: string;
 };
 
@@ -425,16 +481,14 @@ const GameContainer = styled.div<GameContainerProps>`
     width: 280px;
   }
   @media only screen and (max-width: 600px) {
-    margin: ${(props) => `${4 + 44 * (Math.pow(2, props.round) - 1)}px 0px`};
-    height: 80px;
+    margin: ${(props) => `${16 + 76 * (Math.pow(2, props.round) - 1)}px 0px`};
   }
   width: 260px;
   background: rgba(255, 255, 255, 1);
-  margin: ${(props) => `${4 + 39 * (Math.pow(2, props.round) - 1)}px 0px`};
+  margin: ${(props) => `${16 + 68 * (Math.pow(2, props.round) - 1)}px 0px`};
   border-radius: 10px;
   box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
     rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
-  height: 70px;
   pointer-events: ${(props) => (props.viewOnly ? "none" : "unset")};
 `;
 
@@ -453,22 +507,27 @@ const TeamHeadlineContainer = styled.div<TeamTextProps>`
   }
 `;
 
-const MasterHeadlineContainer = styled.div<{ bottom: boolean }>`
+const MasterHeadlineContainer = styled.div<{
+  bottom: boolean;
+  color: string;
+  strike: boolean;
+}>`
   font-size: 10px;
+  font-weight: 500;
   padding: 0px 16px;
   height: 12px;
   background: #eee;
   padding: 4px 16px;
+  padding-left: 40px;
+  text-decoration: ${(props) => (props.strike ? "line-through" : "none")};
+  color: ${(props) => (props.color ? props.color : "black")};
   border-radius: ${(props) =>
     props.bottom ? "0px 0px 10px 10px" : "10px 10px 0px 0px"};
 `;
 
-const Space = styled.div<{ height: number }>`
-  height: ${(props) => props.height}px;
-`;
-
 const TeamText = styled.div`
   font-size: 14px;
+  font-weight: 500;
   margin: 4px 4px;
   overflow: hidden;
   white-space: nowrap;
@@ -476,6 +535,8 @@ const TeamText = styled.div`
 
 const TeamRank = styled.div`
   font-size: 10px;
+  min-width: 10px;
+  text-align: right;
   margin: 5px 0;
 `;
 
@@ -552,4 +613,4 @@ const Header = styled.div`
   width: 100%;
 `;
 
-export default App;
+export default View;

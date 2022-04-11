@@ -7,6 +7,8 @@ import Register from "./Register";
 import Home from "./Home";
 import Scores from "./Scores";
 import { StyledEngineProvider } from "@mui/material";
+import BracketForm from "./BracketForm";
+import View from "./View";
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
@@ -18,7 +20,8 @@ root.render(
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/create" element={<App viewOnly={false} />} />
-        <Route path="/view" element={<App viewOnly={true} />} />
+        {/* <Route path="/master" element={<BracketForm />} /> */}
+        <Route path="/view" element={<View />} />
         <Route path="/scores" element={<Scores />} />
         <Route path="/register" element={<Register />} />
       </Routes>

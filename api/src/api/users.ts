@@ -17,11 +17,20 @@ async function create(req, res) {
     });
   }
 
+  const { first_name, last_name, email, affiliation, knowledge } = user;
+  if (!first_name || !last_name || !email || !affiliation || !knowledge) {
+    return res.status(200).send({
+      success: false,
+      response: "Missing fields!",
+    });
+  }
+
   database.create_user({
     ...user,
   });
 
   return res.status(200).send({
+    success: true,
     access_token: user.email,
     user: user,
   });
@@ -69,11 +78,19 @@ async function get_bracket(req, res) {
     });
   }
 
+  const selections = master.response.selections;
+  const bracket = {};
+  for (const selection of Object.entries(selections)) {
+    if (selection[0].includes("0 ")) {
+      bracket[selection[0]] = selection[1];
+    }
+  }
+
   return res.status(200).send({
     success: true,
     response: {
-      bracket: master.response.selections,
-      master: master.response.selections ?? {},
+      bracket,
+      master: {},
     },
   });
 }
