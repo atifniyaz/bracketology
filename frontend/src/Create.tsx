@@ -24,7 +24,7 @@ const ROUND_TO_NAME: Record<number, string> = {
 };
 
 async function validateToken(token: string, setToken: any, setMessage: any) {
-  fetch("http://192.168.68.56:4000/api/users/auth", {
+  fetch("/api/users/auth", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -53,7 +53,7 @@ async function onSubmitBracket(
     selections: stateMap,
   };
 
-  fetch("http://192.168.68.56:4000/api/users/bracket/create", {
+  fetch("/api/users/bracket/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -126,7 +126,7 @@ function App({ viewOnly }: { viewOnly?: boolean }) {
     if (Object.keys(stateMap).length !== 0 || !token) {
       return;
     }
-    fetch("http://192.168.68.56:4000/api/users/bracket/get", {
+    fetch("/api/users/bracket/get", {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
