@@ -43,11 +43,15 @@ export const TD = styled.td`
 export const TableWrapper = styled.div`
   margin: 16px 0 0;
   overflow-y: scroll;
+
+  border-radius: 10px;
 `;
 
 type TableProps = {
   headings: string[];
   rows: any;
+  filters?: string[];
+  rowGenerator?: { [key: string]: (row: any) => JSX.Element };
 };
 
 const FilterPanel = styled.div`
@@ -121,6 +125,7 @@ export function FilterBar(props: any) {
     <FilterPanel>
       {filterSetup.map((setup: FilterSetup) => (
         <Filter
+          key={setup}
           setFilters={addFilter}
           value={setup.key}
           options={setup.options}
@@ -156,6 +161,7 @@ export function Filter(props: any) {
 
           return (
             <FilterOption
+              key={option}
               selected={selected}
               onClick={() => setFilters(value, option)}
             >
@@ -169,30 +175,32 @@ export function Filter(props: any) {
   );
 }
 
-export function Table(props: TableProps) {
-  const { headings } = props;
-
+export function Table({
+  headings,
+  rows,
+  rowGenerator,
+  filters: columnFilters = [],
+}: TableProps) {
   const [filters, setFilters] = useState<Array<FilterConfig>>([]);
   const addFilter = (key: string, value: any) => {
     if (filters.find((f) => f.key === key && f.value === value)) {
-      console.log("removing");
-      console.log({ key, value });
       setFilters(filters.filter((f) => !(f.key === key && f.value === value)));
     } else {
-      console.log("adding");
-      console.log({ key, value });
       setFilters([...filters, { key, value }]);
     }
   };
 
-  const filteredRows = props.rows.filter((row: any) => {
-    return (
-      filters.length === 0 ||
-      filters.some((filter: any) => {
-        return row[filter.key] === filter.value;
-      })
-    );
-  });
+  const filteredRows =
+    filters.length === 0
+      ? rows
+      : rows.filter((row: any) => {
+          return (
+            filters.length === 0 ||
+            filters.some((filter: any) => {
+              return row[filter.key] === filter.value;
+            })
+          );
+        });
 
   const uniques = (value: any, index: number, self: any) => {
     return (
@@ -203,13 +211,12 @@ export function Table(props: TableProps) {
     );
   };
 
-  const filterSetup = headings.map((heading: string) => {
+  const filterSetup = columnFilters.map((filter: string) => {
     return {
-      key: heading,
-      options: props.rows.map((row: any) => row[heading]).filter(uniques),
+      key: filter,
+      options: rows.map((row: any) => row[filter]).filter(uniques),
     } as FilterSetup;
   });
-  console.log(filterSetup);
 
   return (
     <>
@@ -219,7 +226,7 @@ export function Table(props: TableProps) {
         filters={filters}
       />
       <TableWrapper>
-        <TableBase {...props}>
+        <TableBase {...{ headings, rows, columnFilters }}>
           <THEAD>
             <TR>
               {headings.map((heading, index) => (
@@ -231,7 +238,11 @@ export function Table(props: TableProps) {
             {filteredRows.map((row: any, index: number) => (
               <TR key={index}>
                 {headings.map((heading, index) => (
-                  <TD key={index}>{row[heading]}</TD>
+                  <TD key={index}>
+                    {rowGenerator && rowGenerator[heading]
+                      ? rowGenerator[heading](row)
+                      : row[heading]}
+                  </TD>
                 ))}
               </TR>
             ))}

@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useSwipeable } from "react-swipeable";
 import styled, { keyframes } from "styled-components";
+import { Buffer } from "buffer";
+
 import "./App.css";
-import { Circle, PopupNotification } from "./components/Common";
-import { useNavigate } from "react-router-dom";
+import {
+  Circle,
+  Container,
+  ContentHeading,
+  PopupNotification,
+} from "./components/Common";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Modal } from "./components/Modal";
+import { GenericInput } from "./components/Forms";
 
 const ROUND_TO_NAME: Record<number, string> = {
   0: "First Round",
@@ -14,13 +23,85 @@ const ROUND_TO_NAME: Record<number, string> = {
   5: "Championship",
 };
 
-function App() {
+async function validateToken(token: string, setToken: any, setMessage: any) {
+  fetch("http://192.168.68.56:4000/api/users/auth", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+    body: JSON.stringify({ token }),
+  })
+    .then((res) => res.json())
+    .then((res) => {
+      const { success } = res;
+      if (success) {
+        setToken(token);
+      } else {
+        setMessage("Invalid token!");
+      }
+    });
+}
+
+async function onSubmitBracket(
+  stateMap: Record<string, any>,
+  navigate: any,
+  token: string
+) {
+  const body = {
+    token,
+    selections: stateMap,
+  };
+
+  fetch("http://192.168.68.56:4000/api/users/bracket/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+    body: JSON.stringify(body),
+  })
+    .then(() => {
+      navigate("/scores");
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+}
+
+function parseBracketResponse(bracket: any) {
+  const initMap: Record<string, any> = {};
+  for (const teamVal of Object.entries(bracket)) {
+    const team = teamVal as any;
+    initMap[team[0]] = team[1];
+  }
+  return initMap;
+}
+
+function App({ viewOnly }: { viewOnly?: boolean }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const queryToken = searchParams.get("token");
+  let decodedToken: string | null = null;
+  if (queryToken !== null) {
+    try {
+      const buffer = Buffer.from(queryToken, "base64");
+      decodedToken = buffer.toString("utf-8");
+    } catch (e) {}
+  }
+
+  const [token, setToken] = useState<string | null>(
+    (location.state as any)?.token || (viewOnly && decodedToken)
+  );
 
   const maxGames = 8;
   const maxRounds = Math.log2(maxGames) + 1;
 
   const [stateMap, setStateMapNative] = useState<Record<string, any>>({});
+  const [masterMap, setMasterMap] = useState<Record<string, any>>({});
+
   const setState = (round: number, index: number, value: any) => {
     const newMap: Record<string, any> = {
       ...stateMap,
@@ -41,40 +122,42 @@ function App() {
     setStateMapNative(newMap);
   };
 
-  const getData = () => {
-    if (stateMap.size === 0) {
+  const getData = (token: string | null) => {
+    if (Object.keys(stateMap).length !== 0 || !token) {
       return;
     }
-    const initMap: Record<string, any> = {};
-    fetch("./teams.json", {
+    fetch("http://192.168.68.56:4000/api/users/bracket/get", {
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
+        "Access-Control-Allow-Origin": "*",
       },
+      method: "POST",
+      body: JSON.stringify({ token }),
     })
       .then(function (response) {
         return response.json();
       })
       .then(function (myJson) {
-        for (const teamVal of Object.entries(myJson)) {
-          const team = teamVal as any;
-          const { name, rank } = team[1];
-          initMap[`0 ${team[0]}`] = {
-            name,
-            rank,
-          };
+        if (myJson.response.user) {
+          navigate({
+            pathname: "/view",
+            search: `?token=${Buffer.from(token).toString("base64")}`,
+          });
         }
-        setStateMapNative(initMap);
+        setStateMapNative(parseBracketResponse(myJson.response.bracket));
+        setMasterMap(parseBracketResponse(myJson.response.master));
       })
       .catch((e) => {
         console.log(e);
-        navigate("/error");
+        setStateMapNative({});
+        setMessage(e.message);
       });
   };
 
   const [message, setMessageNative] = useState<string>();
   const [popupVisible, setPopupVisible] = useState(false);
   const [hidden, setHidden] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   const [round, setRoundNative] = useState(0);
   const setMessage = (message: string) => {
@@ -89,39 +172,7 @@ function App() {
     }, 3000);
   };
   const setRound = (value: number) => {
-    if (value < 0) {
-      return;
-    }
-    if (value >= maxRounds) {
-      const filteredMap = {
-        selections: [
-          ...Object.entries(stateMap)
-            .filter(([key, value]) => {
-              return !key.includes("0 ");
-            })
-            .map(([key, value]) => {
-              return {
-                [key]: value,
-              };
-            }),
-        ],
-      };
-
-      console.log(JSON.stringify(filteredMap));
-      fetch("http://localhost:4000/api/users/bracket/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify(filteredMap),
-      })
-        .then(() => {
-          navigate("/scores");
-        })
-        .catch((e) => {
-          console.log(e);
-        });
+    if (value < 0 || (value >= maxRounds && viewOnly)) {
       return;
     }
     if (value < round) {
@@ -132,8 +183,16 @@ function App() {
       key.includes(`${value} `)
     ).length;
     const totalGames = maxGames / Math.pow(2, round);
-    if (numSelected === maxGames / Math.pow(2, round)) {
-      setRoundNative(value);
+    if (
+      token === "master" ||
+      viewOnly ||
+      numSelected === maxGames / Math.pow(2, round)
+    ) {
+      if (value >= maxRounds) {
+        setShowModal(true);
+      } else {
+        setRoundNative(value);
+      }
     } else {
       const unselected = totalGames - numSelected;
       const plural = unselected === 1 ? "" : "s";
@@ -145,37 +204,67 @@ function App() {
     }
   };
   useEffect(() => {
-    getData();
-  }, []);
-
-  useEffect(() => {
-    const totalGames = maxGames / Math.pow(2, round);
-    const numSelected = Object.keys(stateMap).filter((key: any) =>
-      key.includes(`${round + 1} `)
-    ).length;
-    if (numSelected === totalGames) {
-      setRound(round + 1);
-    } else {
-      setMessage(
-        `${round} ${totalGames} ${numSelected} Not all games have been selected!`
-      );
-    }
-  }, [stateMap]);
+    getData(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handlers = useSwipeable({
     onSwipedLeft: () => setRound(round + 1),
     onSwipedRight: () => setRound(round - 1),
   });
 
-  if (stateMap.size === 0) {
-    return <div>Loading...</div>;
+  let inputTimeout: NodeJS.Timeout;
+
+  if (!token) {
+    return (
+      <>
+        <PopupNotification visible={popupVisible} hidden={hidden}>
+          {message}
+        </PopupNotification>
+        <Modal
+          title="Please enter your access token"
+          submitText="Register"
+          onSubmit={() => navigate("/register")}
+          onCancel={() => navigate("/")}
+        >
+          <GenericInput
+            label="ACCESS TOKEN"
+            onChange={(text: string) => {
+              clearTimeout(inputTimeout);
+              inputTimeout = setTimeout(() => {
+                validateToken(text, setToken, setMessage);
+              }, 1000);
+            }}
+          />
+          <p>
+            Once you enter in your access token, the page will automatically
+            refresh.
+            <br />
+            <br />
+            Don't have an access token? Click below to register.
+          </p>
+        </Modal>
+      </>
+    );
+  }
+  if (Object.keys(stateMap).length === 0) {
+    return <Modal title="Loading..." />;
   }
 
   return (
     <AppContainer>
+      {showModal && (
+        <Modal
+          title="Are you sure you want to submit?"
+          onSubmit={() => {
+            setShowModal(false);
+            onSubmitBracket(stateMap, navigate, token);
+          }}
+          onCancel={() => setShowModal(false)}
+        ></Modal>
+      )}
       <Arrow
         left
-        opacity={round > 0}
         onClick={() => {
           setRound(round - 1);
           window.scrollTo({
@@ -207,6 +296,8 @@ function App() {
                         index={index}
                         setState={setState}
                         stateMap={stateMap}
+                        masterMap={masterMap}
+                        viewOnly={viewOnly ?? true}
                       />
                     );
                   }
@@ -221,7 +312,6 @@ function App() {
       </BracketContent>
       <Arrow
         left={false}
-        opacity={round + 1 < maxRounds}
         onClick={() => {
           setRound(round + 1);
           window.scroll({
@@ -243,24 +333,48 @@ function GameComponent({
   index,
   setState,
   stateMap,
+  masterMap,
+  viewOnly,
 }: {
   round: number;
   currRound: number;
   index: number;
   setState: any;
   stateMap: Record<string, any>;
+  masterMap: Record<string, any>;
+  viewOnly: boolean;
 }) {
   const homeTeam = stateMap[`${round} ${index * 2}`];
   const awayTeam = stateMap[`${round} ${index * 2 + 1}`];
 
+  const masterHome = masterMap[`${round} ${index * 2}`];
+  const masterAway = masterMap[`${round} ${index * 2 + 1}`];
+
   const selectedTeam = stateMap[`${round + 1} ${index}`] ?? null;
   const [selected, setSelected] = useState<boolean | null>(null);
 
+  const homeColor =
+    masterHome && homeTeam && round > 0
+      ? masterHome.id === homeTeam.id
+        ? "green"
+        : "red"
+      : "black";
+  const awayColor =
+    masterAway && awayTeam && round > 0
+      ? masterAway.id === awayTeam.id
+        ? "green"
+        : "red"
+      : "black";
+
   return (
-    <GameContainer round={round - currRound}>
+    <GameContainer round={round - currRound} viewOnly={viewOnly}>
+      <MasterHeadlineContainer bottom={false}>
+        {round > 0 && masterHome?.name}
+      </MasterHeadlineContainer>
       <TeamHeadline
         team={homeTeam}
-        selected={selectedTeam === homeTeam}
+        selected={selectedTeam && selectedTeam?.id === homeTeam?.id}
+        color={homeColor}
         onSelected={() => {
           setState(round + 1, index, homeTeam);
           setSelected(true);
@@ -268,12 +382,16 @@ function GameComponent({
       />
       <TeamHeadline
         team={awayTeam}
-        selected={selectedTeam === awayTeam}
+        selected={selectedTeam && selectedTeam?.id === awayTeam?.id}
+        color={awayColor}
         onSelected={() => {
           setState(round + 1, index, awayTeam);
           setSelected(false);
         }}
       />
+      <MasterHeadlineContainer bottom={true}>
+        {round > 0 && masterAway?.name}
+      </MasterHeadlineContainer>
     </GameContainer>
   );
 }
@@ -282,13 +400,19 @@ function TeamHeadline({
   selected,
   onSelected,
   team,
+  color,
 }: {
   selected: boolean | null;
   onSelected: () => void;
   team: any;
+  color: string;
 }) {
   return (
-    <TeamHeadlineContainer selected={selected} onClick={() => onSelected()}>
+    <TeamHeadlineContainer
+      selected={selected}
+      textColor={color}
+      onClick={() => onSelected()}
+    >
       <TeamRank>{team?.rank}</TeamRank>
       <TeamText>{team?.name}</TeamText>
       <Circle color={selected ? "blue" : "transparent"} />
@@ -298,32 +422,32 @@ function TeamHeadline({
 
 type GameContainerProps = {
   round: number;
+  viewOnly: boolean;
 };
 
 type TeamTextProps = {
   selected: boolean | null;
+  textColor: string;
 };
 
 type ArrowProps = {
   left: boolean;
-  opacity: boolean;
 };
 
 const GameContainer = styled.div<GameContainerProps>`
   @media only screen and (min-width: 600px) {
     width: 280px;
   }
-  @media only screen and (max-width: 800px) {
-    margin: ${(props) => `${16 + 66 * (Math.pow(2, props.round) - 1)}px 0px`};
+  @media only screen and (max-width: 600px) {
+    margin: ${(props) => `${16 + 76 * (Math.pow(2, props.round) - 1)}px 0px`};
   }
   width: 260px;
   background: rgba(255, 255, 255, 1);
-  margin: ${(props) => `${16 + 56 * (Math.pow(2, props.round) - 1)}px 0px`};
-  padding: 8px;
+  margin: ${(props) => `${16 + 68 * (Math.pow(2, props.round) - 1)}px 0px`};
   border-radius: 10px;
-  transition: all 1s linear;
   box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
     rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+  pointer-events: ${(props) => (props.viewOnly ? "none" : "unset")};
 `;
 
 const TeamHeadlineContainer = styled.div<TeamTextProps>`
@@ -333,10 +457,22 @@ const TeamHeadlineContainer = styled.div<TeamTextProps>`
   margin-bottom: 5px;
   align-items: end;
   border-radius: 10px;
+  padding: 0px 8px;
+  color: ${(props) => (props.textColor ? props.textColor : "black")};
 
   @media only screen and (max-width: 600px) {
-    padding: 4px;
+    padding: 4px 8px;
   }
+`;
+
+const MasterHeadlineContainer = styled.div<{ bottom: boolean }>`
+  font-size: 10px;
+  padding: 0px 16px;
+  height: 12px;
+  background: #eee;
+  padding: 4px 16px;
+  border-radius: ${(props) =>
+    props.bottom ? "0px 0px 10px 10px" : "10px 10px 0px 0px"};
 `;
 
 const TeamText = styled.div`

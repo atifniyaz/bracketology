@@ -29,13 +29,14 @@ export const PopupNotification = styled.div<PopupNotificationProps>`
   min-height: 48px;
   padding: 12px;
   text-align: left;
+  z-index: 200;
 
   display: ${(props) => (props.hidden ? "none" : "unset")};
   opacity: ${(props) => (props.visible ? 1 : 0)};
   transition: ${(props) =>
     props.visible ? "opacity 250ms linear" : "opacity 250ms linear 2s"};
 
-  @media only screen and (max-width: 600px) {
+  @media only screen and (max-width: 706px) {
     width: 85%;
     margin: 0 auto;
     text-align: center;
@@ -47,13 +48,13 @@ export const Container = styled.div`
   width: 36rem;
   background: rgba(235, 235, 235, 1);
 
-  @media (max-width: 600px) {
+  @media (max-width: 706px) {
     width: -webkit-fill-available;
     box-shadow: 0px;
     padding: 2rem;
   }
 
-  @media (min-width: 600px) {
+  @media (min-width: 706px) {
     margin: auto;
   }
 `;

@@ -8,8 +8,8 @@ class Database {
   client?: mongo.MongoClient;
 
   constructor() {
-    const uri = `mongodb+srv://cluster0.fqnlu.mongodb.net/`;
-    const tlsCAFile = String(path.join(__dirname, "../cert.pem"));
+    const uri = process.env["MONGODB_URI"];
+    const tlsCAFile = process.env["MONGODB_CERT"];
 
     this.client = new mongo.MongoClient(uri, {
       authMechanism: mongo.AuthMechanism.MONGODB_X509,
@@ -41,9 +41,75 @@ class Database {
     }
   }
 
+  public async create_bracket(token: string, selections: any) {
+    try {
+      await this.get_bracket_collection().deleteMany({ token });
+      await this.get_bracket_collection().insertOne({
+        token,
+        selections,
+      });
+      return { success: true };
+    } catch (error) {
+      console.log(error);
+      return { success: false, error: String(error) };
+    }
+  }
+
   public async find_user_by_email(email: string) {
     try {
-      return await this.get_user_collection().findOne({ email });
+      const user = await this.get_user_collection().findOne({ email });
+      return {
+        success: user !== null,
+        response: user,
+      };
+    } catch (error) {
+      console.log(error);
+      return { success: false, error: String(error) };
+    }
+  }
+
+  public async find_bracket_by_token(token: string) {
+    try {
+      const response = await this.get_bracket_collection().findOne({
+        token,
+      });
+      return {
+        success: response !== null,
+        response: response as any,
+      };
+    } catch (error) {
+      console.log(error);
+      return { success: false, error: String(error) };
+    }
+  }
+
+  public async get_master_bracket() {
+    try {
+      const response = await this.client
+        .db("bracket_app")
+        .collection("brackets")
+        .findOne({ token: "master" });
+      return {
+        success: response !== null,
+        response: response as any,
+      };
+    } catch (error) {
+      console.log(error);
+      return { success: false, error: String(error) };
+    }
+  }
+
+  public async get_brackets() {
+    try {
+      const response = await this.client
+        .db("bracket_app")
+        .collection("brackets")
+        .find()
+        .toArray();
+      return {
+        success: response !== null,
+        response: response as any,
+      };
     } catch (error) {
       console.log(error);
       return { success: false, error: String(error) };
@@ -52,6 +118,10 @@ class Database {
 
   private get_user_collection() {
     return this.client.db("bracket_app").collection("users");
+  }
+
+  private get_bracket_collection() {
+    return this.client.db("bracket_app").collection("brackets");
   }
 }
 

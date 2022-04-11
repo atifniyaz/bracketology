@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const NavigationContainer = styled.div`
   width: 100%;
-  @media (min-width: 600px) {
+  @media (min-width: 706px) {
     display: flex;
   }
   display: flow-root;
@@ -18,7 +18,7 @@ const NavigationList = styled.ul`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  @media (min-width: 600px) {
+  @media (min-width: 706px) {
     margin: 20px 0px;
     padding-inline-start: 40px;
   }

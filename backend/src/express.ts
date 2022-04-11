@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 
 import * as bodyParser from "body-parser";
 
@@ -9,4 +10,5 @@ console.log("Launching Server...");
 
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+app.use(cors({ origin: "http://localhost:3000" }));
 app.listen(port, () => console.log(`Server ready on port ${port}!`));

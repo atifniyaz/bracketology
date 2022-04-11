@@ -32,10 +32,21 @@ const InputGroupLabel = styled.div`
 
 const StyledInput = styled.input`
   padding: 0.75rem;
-  border: 0px solid black;
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
-    rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+  border: 1px solid #ccc;
   border-radius: 4px;
+  height: 16px;
+  font-size: 14px;
+`;
+
+const StyledSelect = styled.select`
+  padding: 12px;
+  font-size: 14px;
+  color: black;
+  border: 0px solid black;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 4px;
+  height: 44px;
 `;
 
 export const Password = (props: any): JSX.Element => (
@@ -56,6 +67,20 @@ export const GenericInput = (props: any): JSX.Element => (
         props.onChange(ev.target.value);
       }}
     />
+  </InputGroup>
+);
+
+export const GenericSelect = (props: any): JSX.Element => (
+  <InputGroup>
+    <InputGroupLabel>{props.label}</InputGroupLabel>
+    <StyledSelect
+      placeholder={props.label}
+      onChange={(ev) => {
+        props.onChange(ev.target.value);
+      }}
+    >
+      {props.children}
+    </StyledSelect>
   </InputGroup>
 );
 
