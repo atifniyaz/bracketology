@@ -413,6 +413,7 @@ function TeamHeadline({
       textColor={color}
       onClick={() => onSelected()}
     >
+      <TeamImg src={team?.logo?.href} />
       <TeamRank>{team?.rank}</TeamRank>
       <TeamText>{team?.name}</TeamText>
       <Circle color={selected ? "blue" : "transparent"} />
@@ -478,11 +479,20 @@ const MasterHeadlineContainer = styled.div<{ bottom: boolean }>`
 const TeamText = styled.div`
   font-size: 14px;
   margin: 4px 4px;
+  overflow: hidden;
+  white-space: nowrap;
 `;
 
 const TeamRank = styled.div`
   font-size: 10px;
   margin: 5px 0;
+`;
+
+const TeamImg = styled.img`
+  width: 24px;
+  height: 24px;
+  margin: 0px 4px;
+  border: 0;
 `;
 
 const Arrow = styled.div<ArrowProps>`

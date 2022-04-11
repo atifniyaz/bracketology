@@ -69,11 +69,10 @@ async function get_bracket(req, res) {
     });
   }
 
-  const bracket = require(path.join(__dirname, "../../teams.json"));
   return res.status(200).send({
     success: true,
     response: {
-      bracket,
+      bracket: master.response.selections,
       master: master.response.selections ?? {},
     },
   });

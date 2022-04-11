@@ -116,11 +116,15 @@ class Database {
     }
   }
 
+  public get_teams_collection() {
+    return this.client.db("bracket_app").collection("teams");
+  }
+
   private get_user_collection() {
     return this.client.db("bracket_app").collection("users");
   }
 
-  private get_bracket_collection() {
+  public get_bracket_collection() {
     return this.client.db("bracket_app").collection("brackets");
   }
 }
