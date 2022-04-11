@@ -4,7 +4,7 @@ import { Table } from "./components/Tables";
 import { Buffer } from "buffer";
 
 async function get_scores() {
-  return fetch("http://localhost:4000/api/scores", {
+  return fetch("/api/scores", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

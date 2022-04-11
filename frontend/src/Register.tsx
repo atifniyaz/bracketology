@@ -67,7 +67,7 @@ async function create_user(formData: Record<string, string>) {
     user: formData,
   };
 
-  return fetch("http://localhost:4000/api/users/create", {
+  return fetch("/api/users/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
