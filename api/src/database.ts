@@ -127,6 +127,10 @@ class Database {
   public get_bracket_collection() {
     return this.client.db("bracket_app").collection("brackets");
   }
+
+  public get_scores_collection() {
+    return this.client.db("bracket_app").collection("scores");
+  }
 }
 
 export const database = new Database();

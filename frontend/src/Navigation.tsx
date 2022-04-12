@@ -10,8 +10,11 @@ const NavigationContainer = styled.div`
   justify-content: center;
   text-align: center;
   position: relative;
-  background: blue;
+  background: url("/background.png");
   color: white;
+  > * {
+    text-shadow: 1px 1px 1px #000;
+  }
 `;
 
 const NavigationList = styled.ul`
@@ -49,9 +52,9 @@ export const NavItem = (props: any): JSX.Element => (
 export const NavList = (): JSX.Element => (
   <NavigationList>
     <NavItem item="HOME" to="/" />
-    <NavItem item="CREATE" to="/create" />
-    <NavItem item="SCORES" to="scores" />
-    <NavItem item="REGISTER" to="register" />
+    <NavItem item="BRACKET" to="/create" />
+    <NavItem item="SCORES" to="/scores" />
+    <NavItem item="REGISTER" to="/register" />
   </NavigationList>
 );
 

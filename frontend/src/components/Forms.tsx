@@ -74,6 +74,7 @@ export const GenericSelect = (props: any): JSX.Element => (
   <InputGroup>
     <InputGroupLabel>{props.label}</InputGroupLabel>
     <StyledSelect
+      value={props?.value}
       placeholder={props.label}
       onChange={(ev) => {
         props.onChange(ev.target.value);

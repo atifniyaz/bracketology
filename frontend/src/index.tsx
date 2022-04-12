@@ -20,7 +20,7 @@ root.render(
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/create" element={<App viewOnly={false} />} />
-        {/* <Route path="/master" element={<BracketForm />} /> */}
+        <Route path="/master" element={<BracketForm />} />
         <Route path="/view" element={<View />} />
         <Route path="/scores" element={<Scores />} />
         <Route path="/register" element={<Register />} />

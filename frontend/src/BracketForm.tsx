@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { ContentHeading } from "./components/Common";
+import { Container, ContentHeading } from "./components/Common";
 import * as Forms from "./components/Forms";
 
 const LoginContainer = styled.div`
@@ -53,11 +53,11 @@ export default function BracketForm(props: any) {
   const navigate = useNavigate();
   const divisions = ["WEST", "EAST", "SOUTH", "MIDWEST"];
 
-  const [options, setOptions] = useState<Array<any>>([]);
+  const [options, setOptions] = useState<Array<any> | null>(null);
   const [bracket, setBracket] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    fetch("/api/teams/names", {
+    fetch("/api/get_master", {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -65,7 +65,10 @@ export default function BracketForm(props: any) {
       method: "GET",
     })
       .then((res) => res.json())
-      .then((data) => setOptions(data));
+      .then((data) => {
+        setBracket(data.master.selections);
+        setOptions(data.teams);
+      });
   }, []);
 
   const handleSubmit = () => {
@@ -89,6 +92,14 @@ export default function BracketForm(props: any) {
       });
   };
 
+  if (!options) {
+    return (
+      <Container>
+        <Header>Loading...</Header>
+      </Container>
+    );
+  }
+
   return (
     <LoginContainer>
       <Header>FILL OUT MASTER</Header>
@@ -98,6 +109,11 @@ export default function BracketForm(props: any) {
           {[...Array(16)].map((_, j) => (
             <Forms.GenericSelect
               key={j}
+              value={
+                bracket[`0 ${16 * i + j}`]
+                  ? bracket[`0 ${16 * i + j}`]["id"]
+                  : undefined
+              }
               label={`TEAM ${indexToRank[j]}`}
               onChange={(v: any) => {
                 setBracket({

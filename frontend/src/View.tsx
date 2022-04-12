@@ -78,6 +78,27 @@ function parseBracketResponse(bracket: any) {
   return initMap;
 }
 
+function periodicScoreFetch(setScoreMap: any) {
+  const fetchData = async () => {
+    fetch("/api/teams/scores", {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      method: "GET",
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setScoreMap(res);
+      });
+  };
+
+  fetchData();
+  return setInterval(() => {
+    fetchData();
+  }, 1000 * 30);
+}
+
 function View() {
   const viewOnly = true;
   const navigate = useNavigate();
@@ -102,6 +123,7 @@ function View() {
 
   const [stateMap, setStateMapNative] = useState<Record<string, any>>({});
   const [masterMap, setMasterMap] = useState<Record<string, any>>({});
+  const [scoreMap, setScoreMap] = useState<Record<string, any>>({});
 
   const setState = (round: number, index: number, value: any) => {
     const newMap: Record<string, any> = {
@@ -209,6 +231,11 @@ function View() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  useEffect(() => {
+    const timer = periodicScoreFetch(setScoreMap);
+    return () => clearInterval(timer);
+  }, []);
+
   const handlers = useSwipeable({
     onSwipedLeft: () => setRound(round + 1),
     onSwipedRight: () => setRound(round - 1),
@@ -297,6 +324,7 @@ function View() {
                         index={index}
                         setState={setState}
                         stateMap={stateMap}
+                        scoreMap={scoreMap}
                         masterMap={masterMap}
                         viewOnly={viewOnly ?? true}
                       />
@@ -335,6 +363,7 @@ function GameComponent({
   setState,
   stateMap,
   masterMap,
+  scoreMap,
   viewOnly,
 }: {
   round: number;
@@ -343,6 +372,7 @@ function GameComponent({
   setState: any;
   stateMap: Record<string, any>;
   masterMap: Record<string, any>;
+  scoreMap: Record<string, any>;
   viewOnly: boolean;
 }) {
   const homeTeam = stateMap[`${round} ${index * 2}`];
@@ -354,15 +384,33 @@ function GameComponent({
   const selectedTeam = stateMap[`${round + 1} ${index}`] ?? null;
   const masterSelectedTeam = masterMap[`${round + 1} ${index}`] ?? null;
 
+  const score = scoreMap[`${round} ${index * 2}`] ?? null;
+  console.log(score);
+  const scoreHomeKey = score && score["matchup"]["home"];
+  const scoreAwayKey = score && score["matchup"]["away"];
+
+  let time =
+    score &&
+    score["matchup"]["success"] &&
+    score["matchup"]["clock"]["type"]["shortDetail"];
+  time = time ? time.replace("/", "\n") : "";
+
+  const scoreHome =
+    scoreHomeKey && score["matchup"]["score"][scoreHomeKey]["displayValue"];
+  const scoreAway =
+    scoreAwayKey && score["matchup"]["score"][scoreAwayKey]["displayValue"];
+
   const [selected, setSelected] = useState<boolean | null>(null);
 
   const homeColor =
     masterSelectedTeam && masterHome && homeTeam
       ? round === 0
-        ? selectedTeam.id === homeTeam.id
-          ? homeTeam.id === masterSelectedTeam.id
+        ? homeTeam.id === masterSelectedTeam.id
+          ? selectedTeam.id === homeTeam.id
             ? "green"
-            : "red"
+            : "black"
+          : selectedTeam.id === homeTeam.id
+          ? "#ff6666"
           : "#777"
         : masterSelectedTeam.id === masterHome.id
         ? "black"
@@ -372,10 +420,12 @@ function GameComponent({
   const awayColor =
     masterSelectedTeam && masterAway && awayTeam
       ? round === 0
-        ? selectedTeam.id === awayTeam.id
-          ? awayTeam.id === masterSelectedTeam.id
+        ? awayTeam.id === masterSelectedTeam.id
+          ? selectedTeam.id === awayTeam.id
             ? "green"
-            : "red"
+            : "black"
+          : selectedTeam.id === awayTeam.id
+          ? "#ff6666"
           : "#777"
         : masterSelectedTeam.id === masterAway.id
         ? "black"
@@ -418,22 +468,29 @@ function GameComponent({
       >
         {round > 0 && homeTeam?.name}
       </MasterHeadlineContainer>
-      <TeamHeadline
-        team={masterHome}
-        color={homeColor}
-        onSelected={() => {
-          setState(round + 1, index, homeTeam);
-          setSelected(true);
-        }}
-      />
-      <TeamHeadline
-        team={masterAway}
-        color={awayColor}
-        onSelected={() => {
-          setState(round + 1, index, awayTeam);
-          setSelected(false);
-        }}
-      />
+      <TeamContainer>
+        <TeamHeadlinesContainer>
+          <TeamHeadline
+            team={masterHome}
+            score={scoreHome}
+            color={homeColor}
+            onSelected={() => {
+              setState(round + 1, index, homeTeam);
+              setSelected(true);
+            }}
+          />
+          <TeamHeadline
+            team={masterAway}
+            score={scoreAway}
+            color={awayColor}
+            onSelected={() => {
+              setState(round + 1, index, awayTeam);
+              setSelected(false);
+            }}
+          />
+        </TeamHeadlinesContainer>
+        <GameClock>{time}</GameClock>
+      </TeamContainer>
       <MasterHeadlineContainer
         bottom={true}
         color={masterAwayColor}
@@ -448,17 +505,20 @@ function GameComponent({
 function TeamHeadline({
   onSelected,
   team,
+  score,
   color,
 }: {
   onSelected: () => void;
   team: any;
   color: string;
+  score: string;
 }) {
   return (
     <TeamHeadlineContainer textColor={color} onClick={() => onSelected()}>
       <TeamImg src={team?.logo?.href} />
       <TeamRank>{team?.rank}</TeamRank>
       <TeamText>{team?.name}</TeamText>
+      <ScoreText>{score}</ScoreText>
     </TeamHeadlineContainer>
   );
 }
@@ -490,6 +550,28 @@ const GameContainer = styled.div<GameContainerProps>`
   box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
     rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
   pointer-events: ${(props) => (props.viewOnly ? "none" : "unset")};
+`;
+
+const GameClock = styled.div`
+  margin: 12px;
+  margin-left: auto;
+  height: match-parent;
+  justify-content: center;
+  align-items: center;
+  overflow: none;
+  text-wrap: wrap;
+  font-size: 11px;
+  font-weight: 500;
+  width: 30px;
+  text-align: center;
+`;
+
+const TeamHeadlinesContainer = styled.div`
+  flex-grow: 1;
+  max-width: 240px;
+  @media only screen and (max-width: 600px) {
+    max-width: 220px;
+  }
 `;
 
 const TeamHeadlineContainer = styled.div<TeamTextProps>`
@@ -525,12 +607,27 @@ const MasterHeadlineContainer = styled.div<{
     props.bottom ? "0px 0px 10px 10px" : "10px 10px 0px 0px"};
 `;
 
+const TeamContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+`;
+
 const TeamText = styled.div`
   font-size: 14px;
   font-weight: 500;
   margin: 4px 4px;
   overflow: hidden;
   white-space: nowrap;
+`;
+
+const ScoreText = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  margin: 4px 4px;
+  padding-left: 8px;
+  margin-left: auto;
 `;
 
 const TeamRank = styled.div`

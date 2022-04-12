@@ -17,9 +17,15 @@ app.use(express.static(path.join(__dirname, "../../frontend/build")));
 import "./api/users";
 import "./api/bracket";
 import "./api/scores";
-import "./api/teams";
+import * as teams from "./api/teams";
 
 // AFTER defining routes: Anything that doesn't match what's above, send back index.html; (the beginning slash ('/') in the string is important!)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../../frontend/build/index.html"));
 });
+
+setInterval(() => {
+  console.log("Checking for updated scores...");
+  teams.get_scores_for_master_native();
+  console.log("Done checking for updated scores...");
+}, 1000 * 30);
