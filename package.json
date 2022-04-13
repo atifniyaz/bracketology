@@ -2,9 +2,8 @@
   "scripts": {
     "frontend": "cd frontend && npm run start",
     "api": "cd api && nodemon dist/main.js",
-    "build": "(cd frontend && npm run build) && (cd api && npm run build)",
-    "dev": "concurrently --kill-others-on-fail \"npm run api\" \"npm run frontend\"",
-    "heroku-postbuild": "cd frontend && yarn install && npm install && npm run build"
+    "build": "(cd frontend && yarn install && npm run build) && (cd api && yarn install && npm run build)",
+    "dev": "concurrently --kill-others-on-fail \"npm run api\" \"npm run frontend\""
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-rc.1",
